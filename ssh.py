@@ -95,7 +95,7 @@ class LoginPage (object):
             elif c == ord('q'):
                 break
         return
-           
+    
     def end_curses(self):
         curses.echo()
         curses.nocbreak()
@@ -122,7 +122,7 @@ class FileExplorer(LoginPage):
         direc = None
         while True:
             files = self.list_files(direc)
-            self.pad.addstr(10,10,''.join(files))
+            self.pad.addstr(5+i,10,''.join(files))
             self.pad.refresh(0,0, 0,0, self.PAD_HEIGHT, self.PAD_WIDTH)
             widgets = self.widgets(files,i)
             direc_index = self.select(widgets)
@@ -138,7 +138,7 @@ class FileExplorer(LoginPage):
         output_list = self.s.before.decode().split()
         output_str = ''.join(output_list)
         regex = re.compile(r'm[a-z.A-Z]*')
-        files = [match.lstrip('m') for match in re.findall(regex, output_str) if len(match) > 1]
+        files = [match.lstrip('m') for match in re.findall(regex, output_str) if len(match) > 1] 
         return files
     
     def widgets(self, files,i):
