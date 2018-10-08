@@ -92,8 +92,10 @@ class LoginPage (object):
                     boxes[selected].addstr(0,0, self.inputs[selected])
                 else:#returns the directory that we want to go to
                     return selected
-            elif c == curses.KEY_LEFT:
-                self.select(stack[0],stack)
+            elif c == curses.KEY_LEFT:#goes back to the previous directory
+                stack.pop()
+                self.pad.clrtobot
+                self.select(stack[-1],stack)
         return
     
     def end_curses(self):
@@ -149,8 +151,10 @@ class FileExplorer(LoginPage):
     
     def widgets(self, files,i):
         widgets=[]
+        list_win = curses.newpad(len(files)+2, len(max(files))+1)
+        list_win.refresh(0,0, 0,0, len(files)+2, len(max(files))+1)
         for f in files:
-            widget = self.pad.derwin(1,len(f)+1, int(files.index(f))+1,i*20)
+            widget = list_win.derwin(1,len(f), int(files.index(f)),0)
             widget.addstr(f)
             widgets.append(widget)
         return widgets
