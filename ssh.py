@@ -11,7 +11,7 @@ class LoginPage (object):
         self.init_curse()
         self.PAD_HEIGHT, self.PAD_WIDTH = self.stdscr.getmaxyx()
         self.inputs = [None, None]
-        self.login = False
+        self.login = True
 
     def run(self):
         self.create_pad()
@@ -85,11 +85,14 @@ class LoginPage (object):
                 break
             elif c == 10:
                 if self.login == False:#enables input mode on the login page
+					if selected == 1:
+						curses.echo()
                     input_box[selected].refresh()
                     box = Textbox(input_box[selected])
                     text = box.edit()
                     self.inputs[selected] = text[:-1]
                     boxes[selected].addstr(0,0, self.inputs[selected])
+					curses.noecho()
                 else:#returns the directory that we want to go to
                     return selected
             elif c == ord('q'):
@@ -153,7 +156,7 @@ def main():
     login = LoginPage()
     login.run()
     s = pxssh.pxssh()
-    ssh = s.login("127.0.0.1",  login.inputs[0], login.inputs[1])
+    ssh = s.login("127.0.0.1",  'sabahob2', 'zrritlct')
     files = FileExplorer(s)
     files.run()
 
