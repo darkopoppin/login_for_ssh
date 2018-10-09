@@ -1,7 +1,7 @@
 import curses
 from curses.textpad import Textbox, rectangle
 from pexpect import pxssh
-import subprocess
+from pathlib import Path
 import re
 
 class LoginPage (object):
@@ -12,6 +12,7 @@ class LoginPage (object):
         self.PAD_HEIGHT, self.PAD_WIDTH = self.stdscr.getmaxyx()
         self.inputs = [None, None]
         self.login = True
+        self.login = False 
 
     def run(self):
         self.create_pad()
@@ -58,7 +59,7 @@ class LoginPage (object):
     
         return boxes, input_box
     
-    def select(self, boxes, input_box=None):
+    def select(self, boxes, stack=None, input_box=None):
         selected = 0
         last = 1
         while True:
@@ -95,10 +96,12 @@ class LoginPage (object):
 					curses.noecho()
                 else:#returns the directory that we want to go to
                     return selected
-            elif c == ord('q'):
-                break
+            elif c == curses.KEY_LEFT:#goes back to the previous directory
+                stack.pop()
+                self.pad.clrtobot
+                self.select(stack[-1],stack)
         return
-           
+    
     def end_curses(self):
         curses.echo()
         curses.nocbreak()
@@ -123,40 +126,48 @@ class FileExplorer(LoginPage):
     def moving(self):
         i = 0
         direc = None
+        stack = []
+        
         while True:
             files = self.list_files(direc)
-            self.pad.addstr(10,10,''.join(files))
-            self.pad.refresh(0,0, 0,0, self.PAD_HEIGHT, self.PAD_WIDTH)
             widgets = self.widgets(files,i)
-            direc_index = self.select(widgets)
+            stack.append(widgets)
+            direc_index = self.select(widgets, stack)
             direc = files[direc_index]
             i += 1
 
     def list_files(self, direc=None):
         if direc != None:
-            self.s.sendline('cd ' + direc)
-            self.s.prompt
+            self.s.sendline('cd ' + direc) 
+            self.s.prompt()
         self.s.sendline('ls')
         self.s.prompt()
         output_list = self.s.before.decode().split()
-        output_str = ''.join(output_list)
-        regex = re.compile(r'm[a-z.A-Z]*')
-        files = [match.lstrip('m') for match in re.findall(regex, output_str) if len(match) > 1]
+        regex = re.compile(r'm[a-z.A-Z0-9]*')
+        files = []
+        for f in output_list[1:]: 
+            if Path(f).suffix != '':
+                files.append(f)
+            else:
+                fi = re.findall(regex, f)
+                files.append(max(fi).lstrip('m'))
         return files
     
     def widgets(self, files,i):
         widgets=[]
+        list_win = curses.newpad(len(files)+2, len(max(files))+1)
+        list_win.refresh(0,0, 0,0, len(files)+2, len(max(files))+1)
         for f in files:
-            widget = self.pad.derwin(1,len(f)+1, int(files.index(f))+1,i*10)
+            widget = list_win.derwin(1,len(f), int(files.index(f)),0)
             widget.addstr(f)
             widgets.append(widget)
         return widgets
 
 def main():
     login = LoginPage()
-    login.run()
+    #login.run()
     s = pxssh.pxssh()
-    ssh = s.login("127.0.0.1",  'sabahob2', 'zrritlct')
+    ssh = s.login("127.0.0.1",  'darko', '')
     files = FileExplorer(s)
     files.run()
 
